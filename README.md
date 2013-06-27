@@ -49,9 +49,9 @@ Example CSV output:
 <tr><td>DMZ daily</td><td>10.10.1.33</td><td>306</td><td>363</td><td></td><td></td><td>15.7</td></tr>
 <tr><td>DMZ daily</td><td>10.10.1.43</td><td>262</td><td>268</td><td></td><td></td><td>2.24</td></tr>
 <tr><td>DMZ daily</td><td>10.10.1.44</td><td></td><td>339</td><td>TRUE</td><td></td><td></td></tr>
-<tr><td>Incremental Vulnerability Sc</td><td>10.10.32.93</td><td>840</td><td></td><td></td><td>TRUE</td><td></td></tr>
-<tr><td>Incremental Vulnerability Sc</td><td>10.10.32.95</td><td>780</td><td></td><td></td><td>TRUE</td><td></td></tr>
-<tr><td>Incremental Vulnerability Sc</td><td>10.20.30.56</td><td>997</td><td></td><td></td><td>TRUE</td><td></td></tr>
-<tr><td>Incremental Vulnerability Sc</td><td>10.20.30.58</td><td>755</td><td></td><td></td><td>TRUE</td><td></td></tr>
-<tr><td>Incremental Vulnerability Sc</td><td>10.20.30.59</td><td>716</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Incremental Scan</td><td>10.10.32.93</td><td>840</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Incremental Scan</td><td>10.10.32.95</td><td>780</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Incremental Scan</td><td>10.20.30.56</td><td>997</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Incremental Scan</td><td>10.20.30.58</td><td>755</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Incremental Scan</td><td>10.20.30.59</td><td>716</td><td></td><td></td><td>TRUE</td><td></td></tr>
 </table>
