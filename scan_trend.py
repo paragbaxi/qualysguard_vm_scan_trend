@@ -14,7 +14,6 @@ At some point, it will hopefully have the following.
 6. # of unique hosts not found was within an asset group, this is important dropped
 
 
-
 '''
 
 import argparse
@@ -78,8 +77,8 @@ def scan_report_ips(scan_root):
 parser = argparse.ArgumentParser(description = 'Trend IG information from scans.')
 parser.add_argument('-a', '--asset_group',
     help = 'FUTURE: Asset group to filter against.')
-parser.add_argument('-d', '--days', default='60',
-    help = 'Number of days to process. Default: 60.')
+parser.add_argument('-d', '--days', default='10',
+    help = 'Number of days to process. Default: 10.')
 parser.add_argument('-f', '--force_download_scans', action = 'store_true',
                     help = 'Delete existing scan XML and download scan XML.')
 parser.add_argument('-m', '--include_manual_scans', action = 'store_true',
