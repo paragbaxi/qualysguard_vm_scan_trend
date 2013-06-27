@@ -33,10 +33,10 @@ Example CSV output:
 <tr><td>Weekly Environment Scan</td><td>10.10.10.127</td><td>657</td><td></td><td></td><td>TRUE</td><td></td></tr>
 <tr><td>Weekly Environment Scan</td><td>10.10.24.69</td><td>219</td><td></td><td></td><td>TRUE</td><td></td></tr>
 <tr><td>Weekly Environment Scan</td><td>10.10.24.78</td><td>209</td><td></td><td></td><td>TRUE</td><td></td></tr>
-<tr><td>Seattle Data Center</td><td>64.39.106.24</td><td>229</td><td></td><td></td><td>TRUE</td><td></td></tr>
-<tr><td>Seattle Data Center</td><td>64.39.106.24</td><td>235</td><td></td><td></td><td>TRUE</td><td></td></tr>
-<tr><td>Seattle Data Center</td><td>64.39.106.24</td><td>609</td><td></td><td></td><td>TRUE</td><td></td></tr>
-<tr><td>Seattle Data Center</td><td>64.39.106.24</td><td>550</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Seattle Data Center</td><td>10.39.106.24</td><td>229</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Seattle Data Center</td><td>10.39.106.24</td><td>235</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Seattle Data Center</td><td>10.39.106.24</td><td>609</td><td></td><td></td><td>TRUE</td><td></td></tr>
+<tr><td>Seattle Data Center</td><td>10.39.106.24</td><td>550</td><td></td><td></td><td>TRUE</td><td></td></tr>
 <tr><td>DMZ daily</td><td>10.10.1.178</td><td>614</td><td></td><td></td><td>TRUE</td><td></td></tr>
 <tr><td>DMZ daily</td><td>10.0.100.10</td><td></td><td>904</td><td>TRUE</td><td></td><td></td></tr>
 <tr><td>DMZ daily</td><td>10.0.100.11</td><td>934</td><td>933</td><td></td><td></td><td>0.11</td></tr>
