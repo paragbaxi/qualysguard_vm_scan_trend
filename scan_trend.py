@@ -16,20 +16,23 @@ At some point, it will hopefully have the following.
 
 '''
 
-import argparse
+import argparse, ConfigParser
 import csv
 import datetime
 import logging
 # import logging.config
 import os
+import qualysapi
 import sqlite3
 import string
 import sys
+import time
 from collections import defaultdict
 from lxml import objectify, etree
 from qualysconnect.util import build_v1_connector, build_v2_connector
+import requests
 
-def load_scan(scan_ref):
+def load_scan(scan_ref, report_template=None):
     """ Returns an objectified QualysGuard scan report of QualysGuard's scan's scan_ref.
 
     """
@@ -43,9 +46,46 @@ def load_scan(scan_ref):
             return objectify.parse(report_xml_file).getroot()
     except IOError:
         # Download XML.
-        logger.info('Downloading scan report %s' % (scan_ref))
-        print 'Downloading scan report %s ...' % (scan_ref),
-        report_xml = qgc.request('scan_report.php','ref=%s' % (scan_ref))
+        if not report_template:
+            # Download complete scan.
+            print 'Downloading scan report %s ...' % (scan_ref),
+            request_parameters = {'ref': scan_ref}
+            logger.debug(request_parameters)
+            report_xml = qgc.request(1, 'scan_report.php', request_parameters)
+        else:
+            # Generate report.
+            print 'Generating report against %s ...' % (scan_ref),
+            request_parameters = {'action': 'launch', 'template_id': str(report_template), 'report_type': 'Scan', 'output_format': 'xml', 'report_refs': scan_ref}
+            logger.debug(request_parameters)
+            xml_output = qgc.request(2, 'report', request_parameters)
+            report_id = etree.XML(xml_output).find('.//VALUE').text
+            logger.debug('report_id: %s' % (report_id))
+            # Wait for report to finish spooling.
+            # Time in seconds to wait between checks.
+            POLLING_DELAY = 30
+            # Time in seconds to wait before checking.
+            STARTUP_DELAY = 30
+            # Maximum number of times to check for report.  About 10 minutes.
+            MAX_CHECKS = 10
+            print 'Report sent to spooler. Checking for report in %s seconds.' % (STARTUP_DELAY)
+            time.sleep(STARTUP_DELAY)
+            for n in range(0, MAX_CHECKS):
+                # Check to see if report is done.
+                xml_output = qgc.request(2, 'report', {'action': 'list', 'id': report_id})
+                tag_status = etree.XML(xml_output).findtext(".//STATE")
+                logger.debug('tag_status: %s' % (tag_status))
+                tag_status = etree.XML(xml_output).findtext(".//STATE")
+                logger.debug('tag_status: %s' % (tag_status))
+                if not type(tag_status) == types.NoneType:
+                    # Report is showing up in the Report Center.
+                    if tag_status == 'Finished':
+                        # Report creation complete.
+                        break
+                # Report not finished, wait.
+                print 'Report still spooling. Trying again in %s seconds.' % (POLLING_DELAY)
+                time.sleep(POLLING_DELAY)
+            # We now have to fetch the report.  Use the report id.
+            report_xml = qgc.request(2, 'report', {'action': 'fetch', 'id': report_id})
         print 'done.'
         # Store XML.
         with open(scan_filename, 'w') as text_file:
@@ -82,9 +122,11 @@ parser.add_argument('-d', '--days', default='10',
 parser.add_argument('-f', '--force_download_scans', action = 'store_true',
                     help = 'Delete existing scan XML and download scan XML.')
 parser.add_argument('-m', '--include_manual_scans', action = 'store_true',
-    help = 'FUTURE: Process adhoc scans. By default, I only process scheduled scans')
+    help = 'FUTURE: Process adhoc scans. By default, I only process scheduled scans.')
+parser.add_argument('-r', '--report_template',
+    help = "FUTURE: Generate reports against REPORT_TEMPLATE's ID to parse data to save time and space.")
 parser.add_argument('--scan_files',
-                    help = 'Two scan XML files to be compared, separated by a comma (,)')
+                    help = 'Two scan XML files to be compared, separated by a comma (,).')
 parser.add_argument('-t', '--scan_title',
                     help = 'Scan title to filter.')
 parser.add_argument('-v', '--verbose', action = 'store_true',
@@ -101,13 +143,14 @@ PATH_LOG = 'log'
 if not os.path.exists(PATH_LOG):
     os.makedirs(PATH_LOG)
 LOG_FILENAME = '%s/%s.log' % (PATH_LOG, datetime.datetime.now().strftime('%Y-%m-%d.%H-%M-%S'))
-# Set log options.
-logger_qc = logging.getLogger('qualysconnect.util')
-logger_qc.setLevel(logging.ERROR)
 # My logging.
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.propagate = False
+# Set log options.
+logger_qc = logging.getLogger('qualysapi.util')
+logger_qc.setLevel(logging.ERROR)
+logger.addHandler(logger_qc)
 # # Import logging configuration.
 # logging.config.fileConfig('logging.conf')
 # Create file handler logger.
@@ -129,22 +172,19 @@ logger_console.setFormatter(formatter)
 logger.addHandler(logger_console)
 # Start coding.
 # Create/Replace sqlite db.
-try:
-    os.remove('scan_trend.sqlite')
-    logger.debug('Removed existing SQLite file.')
-except:
-    pass
 conn = sqlite3.connect('scan_trend.sqlite')
 c = conn.cursor()
-# Create table
-c.execute('''CREATE TABLE if not exists scan_data
-             (scan_title text, ip text, duration_1 integer, duration_2 integer)''')
+# Create tables
+c.execute('''CREATE TABLE IF NOT EXISTS scan_xmls
+          (schedule_title text, scan_ref text, scan_date text);''')
+c.execute('DROP TABLE IF EXISTS scan_data;')
+c.execute('''CREATE TABLE scan_data
+             (scan_title text, ip text, duration_1 integer, duration_2 integer);''')
 # Primary key are a combination of the scan_title & ip being unique.
-c.execute('CREATE UNIQUE INDEX scan_data_scan_title_ip_index ON scan_data (scan_title, ip)')
+c.execute('CREATE UNIQUE INDEX scan_data_scan_title_ip_index ON scan_data (scan_title, ip);')
 # Download scan list
-# Connect to QualysGuard API v2.
-qgc = build_v1_connector()
-qgc2 = build_v2_connector()
+# Connect to QualysGuard API.
+qgc = qualysapi.connect()
 # Store each unique scan separately in order of newest scan to oldest scan.
 # scans is each scan organized by title.
 # scans['scan title'] = [scan_ref_latest, scan_ref_2nd_latest, ..., scan_ref_oldest]
@@ -162,27 +202,53 @@ else:
     # type={On-Demand|Scheduled|API}&
     scan_type = 'Scheduled'
     # Build request.
-    request = 'scan/?action=list&state=Finished&show_ags=1&show_op=1&type=%s&launched_after_datetime=%s' % (scan_type, str(start_date))
+    url = 'scan/'
+    parameters = {'action': 'list', 'state': 'Finished', 'show_ags': '1', 'show_op': '1', 'type': scan_type, 'launched_after_datetime': str(start_date)}
     # Download scan list
-    xml_output = qgc2.request(request)
-    # Write scan list XML.
-    with open('scans/%s_scan_list.xml' % (datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')), "w") as text_file:
-        text_file.write(xml_output)
+    logger.info('Downloading scan list.')
+    print 'Downloading scan list ...',
+    xml_output = qgc.request(2, url, parameters)
+    print 'done.'
+    # Write scan list XML if debug.
+    if c_args.verbose:
+        with open('scans/%s_scan_list.xml' % (datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')), "w") as text_file:
+            text_file.write(xml_output)
     # Process XML.
     root = objectify.fromstring(xml_output)
     # Parse scan list for scan references. Scan list is in order from newest scan to oldest scan.
-    logging.info('Processing scan list.')
+    logger.info('Processing scan list.')
     for scan in root.RESPONSE.SCAN_LIST.SCAN:
         # Stringify scan title.
-        this_scan_title = str(scan.TITLE)
+        this_scan_title = scan.TITLE.text
         # Scope to title if parameter enabled.
         if c_args.scan_title:
             if this_scan_title != c_args.scan_title:
                 continue
+        this_scan_date = scan.LAUNCH_DATETIME.text
+        this_scan_date_time = datetime.datetime.strptime( this_scan_date[:-1], "%Y-%m-%dT%H:%M:%S" )
+        this_scan_ref = scan.REF.text
+        # Add to scan_xmls table.
+        c.execute("INSERT INTO scan_xmls VALUES (?, ?, ?);", (this_scan_title, this_scan_ref, this_scan_date_time))
+        # Check to see if we have too many older scan XMLs.
+        c.execute("SELECT * FROM scan_xmls WHERE schedule_title = ?;", (this_scan_title,))
+        all_saved_scans = c.fetchall()
+        logger.debug(all_saved_scans, len(all_saved_scans))
+        # Delete oldest scan XML if we have more than 2 of the same scheduled scans.
+        if len(all_saved_scans) > 2:
+            logger.debug('Deleting oldest scan.')
+            # Sort list, get oldest scan, get tuple, get scan_ref of that.
+            oldest_scan_ref = sorted(all_saved_scans,key=lambda x: x[2])[0:1][0][1]
+            # Delete oldest XML file.
+            c.execute("DELETE FROM scan_xmls WHERE scan_ref = ?", (oldest_scan_ref,))
+            try:
+                os.remove('scans/%s' % oldest_scan_ref.replace('/','_'))
+            except:
+                # Scan XML does not exist.
+                pass
         if len(scans[this_scan_title]) < 2:
             # We only care about the last two scans.
-            logger.info('%s: %s' % (this_scan_title, scan.REF))
-            scans[this_scan_title].append(str(scan.REF))
+            logger.info('%s: %s' % (this_scan_title, this_scan_ref))
+            scans[this_scan_title].append(this_scan_ref)
 # Download & convert each scheduled scan XML to scans_data dict.
 for scan_title in scans:
     scan_number = 1
@@ -195,8 +261,8 @@ for scan_title in scans:
                 # Scan XML does not exist.
                 pass
         # Fetch and/or open, and save scan.
-        scan_root = load_scan(scan_ref)
-        logging.info('Processing scan %s.' % (scan_ref))
+        scan_root = load_scan(scan_ref, c_args.report_template)
+        logger.info('Processing scan %s.' % (scan_ref))
         # Store pertinent IGs for later processing.
         scan_time = scan_root.xpath('//KEY[@value="DURATION"]/text()')[0]
         logger.debug(scan_time)
@@ -216,7 +282,7 @@ for scan_title in scans:
             # Insert individual IP info.
             if scan_number == 1:
                 logger.debug('insert %s, %s, %s' % (scan_title, ip_address, scan_host_time))
-                c.execute("INSERT INTO scan_data VALUES (?, ?, ?, null)", (scan_title, ip_address, scan_host_time))
+                c.execute("INSERT INTO scan_data VALUES (?, ?, ?, null);", (scan_title, ip_address, scan_host_time))
             else:
                 logger.debug('update %s, %s, %s' % (scan_title, ip_address, scan_host_time))
                 c.execute('''REPLACE INTO scan_data (scan_title, ip, duration_1, duration_2)
@@ -229,33 +295,37 @@ for scan_title in scans:
             conn.commit()
         # Increment scan number to track duration column.
         scan_number += 1
-with open('scan_trend.csv', 'wb') as csvfile:
+# Write CSV.
+csv_filename = '%s_scan_trend.csv' % (datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
+with open(csv_filename, 'wb') as csvfile:
     csv_writer = csv.writer(csvfile)
-    csv_writer.writerow(['Scan title', 'Host', 'Duration 1', 'Duration 2', 'New host', 'Lost host', '% duration difference'])
+    csv_writer.writerow(['Scan title', 'Host', 'Latest duration', 'Older duration', 'New host', 'Lost host', 'Duration % difference'])
     with conn:
-        c.execute("SELECT * FROM scan_data")
+        c.execute("SELECT * FROM scan_data;")
         while True:
             row = c.fetchone()
             if row == None:
                 break
             # Calculate metrics
-            latest_scan = row[3]
-            previous_scan = row[2]
+            latest_scan = row[2]
+            previous_scan = row[3]
             new_host = latest_scan and not previous_scan
+            lost_host = previous_scan and not latest_scan
             # Prefer blanks in CSV versus False.
             if not new_host:
                 new_host = None
-            lost_host = previous_scan and not latest_scan
             if not lost_host:
                 lost_host = None
             percent_difference = None
             try:
                 percent_difference = round(abs(1.0-float(previous_scan)/float(latest_scan))*100.0, 2)
             except TypeError, e:
-                logging.debug('Host not in both scans.')
+                logger.debug('Host not in both scans.')
                 pass
             row = row + (new_host,) + (lost_host,) + (percent_difference,)
             csv_writer.writerow(row)
 # Save SQLite DB.
 conn.close()
+# Notify user it's complete.
+print 'Successfully wrote scan trending data to %s file.' % (csv_filename)
 
