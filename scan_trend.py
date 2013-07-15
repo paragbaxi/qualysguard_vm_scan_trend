@@ -16,17 +16,20 @@ At some point, it will hopefully have the following.
 
 '''
 
+import datetime
+import logging
+import os
 import argparse, ConfigParser
 import csv
 import datetime
 import logging
-# import logging.config
 import os
 import qualysapi
 import sqlite3
 import string
 import sys
 import time
+import types
 from collections import defaultdict
 from lxml import objectify, etree
 from qualysconnect.util import build_v1_connector, build_v2_connector
@@ -51,13 +54,13 @@ def load_scan(scan_ref, report_template=None):
             print 'Downloading scan report %s ...' % (scan_ref),
             request_parameters = {'ref': scan_ref}
             logger.debug(request_parameters)
-            report_xml = qgc.request(1, 'scan_report.php', request_parameters)
+            report_xml = qgc.request(1, 'scan_report.php', request_parameters).encode('utf-8')
         else:
             # Generate report.
             print 'Generating report against %s ...' % (scan_ref),
             request_parameters = {'action': 'launch', 'template_id': str(report_template), 'report_type': 'Scan', 'output_format': 'xml', 'report_refs': scan_ref}
             logger.debug(request_parameters)
-            xml_output = qgc.request(2, 'report', request_parameters)
+            xml_output = qgc.request(2, 'report', request_parameters).encode('utf-8')
             report_id = etree.XML(xml_output).find('.//VALUE').text
             logger.debug('report_id: %s' % (report_id))
             # Wait for report to finish spooling.
@@ -71,7 +74,7 @@ def load_scan(scan_ref, report_template=None):
             time.sleep(STARTUP_DELAY)
             for n in range(0, MAX_CHECKS):
                 # Check to see if report is done.
-                xml_output = qgc.request(2, 'report', {'action': 'list', 'id': report_id})
+                xml_output = qgc.request(2, 'report', {'action': 'list', 'id': report_id}).encode('utf-8')
                 tag_status = etree.XML(xml_output).findtext(".//STATE")
                 logger.debug('tag_status: %s' % (tag_status))
                 tag_status = etree.XML(xml_output).findtext(".//STATE")
@@ -85,7 +88,7 @@ def load_scan(scan_ref, report_template=None):
                 print 'Report still spooling. Trying again in %s seconds.' % (POLLING_DELAY)
                 time.sleep(POLLING_DELAY)
             # We now have to fetch the report.  Use the report id.
-            report_xml = qgc.request(2, 'report', {'action': 'fetch', 'id': report_id})
+            report_xml = qgc.request(2, 'report', {'action': 'fetch', 'id': report_id}).encode('utf-8')
         print 'done.'
         # Store XML.
         with open(scan_filename, 'w') as text_file:
@@ -138,7 +141,7 @@ if c_args.asset_group or c_args.include_manual_scans:
  screaming on to the first planet they came across - which happened to be the Earth - where due to a terrible\
  miscalculation of scale the entire battle fleet was accidentally swallowed by a small dog.'
     exit(1)
-# Set log directory.
+# # Set log directory.
 PATH_LOG = 'log'
 if not os.path.exists(PATH_LOG):
     os.makedirs(PATH_LOG)
@@ -146,30 +149,29 @@ LOG_FILENAME = '%s/%s.log' % (PATH_LOG, datetime.datetime.now().strftime('%Y-%m-
 # My logging.
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-logger.propagate = False
+# logger.propagate = False
 # Set log options.
-logger_qc = logging.getLogger('qualysapi.util')
-logger_qc.setLevel(logging.ERROR)
-logger.addHandler(logger_qc)
-# # Import logging configuration.
-# logging.config.fileConfig('logging.conf')
+logging_level = logging.INFO
+# Log qualysapi.
+logger_qc = logging.getLogger('qualysapi.connector')
+if c_args.verbose:
+    logging_level = logging.DEBUG
+logger_qc.setLevel(logging_level)
 # Create file handler logger.
 logger_file = logging.FileHandler(LOG_FILENAME)
-logging_level = logging.DEBUG
-if not c_args.verbose:
-    logging_level = logging.INFO
 logger_file.setLevel(logging_level)
 logger_file.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)s %(funcName)s %(lineno)d %(message)s','%m-%d %H:%M'))
-logger.addHandler(logger_file)
 # Define a Handler which writes WARNING messages or higher to the sys.stderr
 logger_console = logging.StreamHandler()
 logger_console.setLevel(logging.ERROR)
 # Set a format which is simpler for console use.
-formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
 # Tell the handler to use this format.
-logger_console.setFormatter(formatter)
-# Add the handler to the root logger
+logger_console.setFormatter(logging.Formatter('%(name)-12s: %(levelname)-8s %(lineno)d %(message)s'))
+# Add the handlers to the loggers
+logger.addHandler(logger_file)
 logger.addHandler(logger_console)
+logger_qc.addHandler(logger_file)
+logger_qc.addHandler(logger_console)
 # Start coding.
 # Create/Replace sqlite db.
 conn = sqlite3.connect('scan_trend.sqlite')
@@ -207,7 +209,7 @@ else:
     # Download scan list
     logger.info('Downloading scan list.')
     print 'Downloading scan list ...',
-    xml_output = qgc.request(2, url, parameters)
+    xml_output = qgc.request(2, url, parameters).encode('utf-8')
     print 'done.'
     # Write scan list XML if debug.
     if c_args.verbose:
@@ -232,7 +234,7 @@ else:
         # Check to see if we have too many older scan XMLs.
         c.execute("SELECT * FROM scan_xmls WHERE schedule_title = ?;", (this_scan_title,))
         all_saved_scans = c.fetchall()
-        logger.debug(all_saved_scans, len(all_saved_scans))
+        # logger.debug(str(all_saved_scans), len(all_saved_scans))
         # Delete oldest scan XML if we have more than 2 of the same scheduled scans.
         if len(all_saved_scans) > 2:
             logger.debug('Deleting oldest scan.')
