@@ -32,8 +32,6 @@ import time
 import types
 from collections import defaultdict
 from lxml import objectify, etree
-from qualysconnect.util import build_v1_connector, build_v2_connector
-import requests
 
 def load_scan(scan_ref, report_template=None):
     """ Returns an objectified QualysGuard scan report of QualysGuard's scan's scan_ref.
