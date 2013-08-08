@@ -5,6 +5,16 @@ Provide operational context on why vulnerability numbers are fluctuating in Qual
 
 Automatically downloads scheduled scans to show differene in live hosts and host scan times.
 
+Instructions
+============
+
+It is highly recommended to create a report template against manual scan data that is filtered against a static list of QID 45038 (Host Scan Time). This report_template ID should be inputted in the "--report_template" parameter.
+
+This will enable the script to generate reports against manual scans instead of downloading complete scan data.
+
+Usage
+=====
+
 <pre>
 usage: scan_trend.py [-h] [-d DAYS] [-f] [-r REPORT_TEMPLATE]
                      [--scan_files SCAN_FILES] [-t SCAN_TITLE] [-v]
