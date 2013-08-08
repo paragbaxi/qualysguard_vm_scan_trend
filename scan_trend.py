@@ -116,16 +116,17 @@ def scan_report_ips(scan_root):
 
 # Declare the command line flags/options we want to allow.
 parser = argparse.ArgumentParser(description = 'Trend IG information from scans.')
-parser.add_argument('-a', '--asset_group',
-    help = 'FUTURE: Asset group to filter against.')
+# parser.add_argument('-a', '--asset_group',
+#     help = 'FUTURE: Asset group to filter against.')
 parser.add_argument('-d', '--days', default='10',
     help = 'Number of days to process. Default: 10.')
 parser.add_argument('-f', '--force_download_scans', action = 'store_true',
                     help = 'Delete existing scan XML and download scan XML.')
-parser.add_argument('-m', '--include_manual_scans', action = 'store_true',
-    help = 'FUTURE: Process adhoc scans. By default, I only process scheduled scans.')
+# parser.add_argument('-m', '--include_manual_scans', action = 'store_true',
+#     help = 'FUTURE: Process adhoc scans. By default, I only process scheduled scans.')
 parser.add_argument('-r', '--report_template',
-    help = "FUTURE: Generate reports against REPORT_TEMPLATE's ID to parse data to save time and space.")
+    help = '''Generate reports against REPORT_TEMPLATE's ID to parse data to save time and space.
+            \nThis report template should only include QID 45038, Host Scan Time.''')
 parser.add_argument('--scan_files',
                     help = 'Two scan XML files to be compared, separated by a comma (,).')
 parser.add_argument('-t', '--scan_title',
@@ -134,12 +135,7 @@ parser.add_argument('-v', '--verbose', action = 'store_true',
                     help = 'Outputs additional information to log.')
 # Parse arguments.
 c_args = parser.parse_args()
-if c_args.asset_group or c_args.include_manual_scans:
-    print 'For thousands more years the mighty ships tore across the empty wastes of space and finally dived\
- screaming on to the first planet they came across - which happened to be the Earth - where due to a terrible\
- miscalculation of scale the entire battle fleet was accidentally swallowed by a small dog.'
-    exit(1)
-# # Set log directory.
+# Set log directory.
 PATH_LOG = 'log'
 if not os.path.exists(PATH_LOG):
     os.makedirs(PATH_LOG)
