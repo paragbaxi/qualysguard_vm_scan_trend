@@ -5,12 +5,24 @@ Provide operational context on why vulnerability numbers are fluctuating in Qual
 
 Automatically downloads scheduled scans to show differene in live hosts and host scan times.
 
-Instructions
-============
+Important
+=========
 
-It is highly recommended to create a report template against manual scan data that is filtered against a static list of QID 45038 (Host Scan Time). This report_template ID should be inputted in the "--report_template" parameter.
+It is highly recommended to generate reports against each scan versus having the script download the actual scan data.
 
-This will enable the script to generate reports against manual scans instead of downloading complete scan data.
+The following is required for this feature:
+
+1. Create a static search list (VM > Reports > Search Lists > New > Static Lists... ) containing QID 45038 (Host Scan Time). 
+
+Create a report template (VM > Reports > Templates > New > Scan Template... ) with the following configuration:
+
+1. Scan Results Section > Run Time: Select individual scan results at run time (Manual)
+2. Filter > Selective Vulnerability Reporting > Custom > Add Lists > 
+
+This report_template ID should be inputted in the "--report_template" parameter. You can find the report template ID by editing the report template and clicking the Test button. A new window will pop up with a url like the following:
+https://qualysguard.qualys.com/fo/report/new_report.php?run_temp=REPORT_TEMPLATE_ID&temp=1
+
+The report template ID is the value associated with the run_temp parameter. This setting will enable the script to generate reports against manual scans instead of downloading complete scan data (which can be hundreds of megabytes on large scans).
 
 Usage
 =====
