@@ -6,25 +6,27 @@ Provide operational context on why vulnerability numbers are fluctuating in Qual
 Automatically downloads scheduled scans to show differene in live hosts and host scan times.
 
 <pre>
-usage: scan_trend.py [-h] [-a ASSET_GROUP] [-d DAYS] [-f] [-m]
+usage: scan_trend.py [-h] [-d DAYS] [-f] [-r REPORT_TEMPLATE]
                      [--scan_files SCAN_FILES] [-t SCAN_TITLE] [-v]
 
 Trend IG information from scans.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -a ASSET_GROUP, --asset_group ASSET_GROUP
-                        FUTURE: Asset group to filter against.
   -d DAYS, --days DAYS  Number of days to process. Default: 10.
   -f, --force_download_scans
                         Delete existing scan XML and download scan XML.
-  -m, --include_manual_scans
-                        FUTURE: Process adhoc scans. By default, I only process scheduled scans
+  -r REPORT_TEMPLATE, --report_template REPORT_TEMPLATE
+                        Generate reports against REPORT_TEMPLATE's ID to parse
+                        data to save time and space. This report template
+                        should only include QID 45038, Host Scan Time.
   --scan_files SCAN_FILES
-                        Two scan XML files to be compared, separated by a comma (,)
+                        Two scan XML files to be compared, separated by a
+                        comma (,).
   -t SCAN_TITLE, --scan_title SCAN_TITLE
                         Scan title to filter.
   -v, --verbose         Outputs additional information to log.
+
 </pre>
 
 Example CSV output:
