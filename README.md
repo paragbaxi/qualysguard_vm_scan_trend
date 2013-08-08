@@ -13,12 +13,23 @@ It is highly recommended to generate reports against each scan versus having the
 The following is required for this feature:
 
 1. Create a static search list (VM > Reports > Search Lists > New > Static Lists... ) containing QID 45038 (Host Scan Time). 
-
+   
+   ![ScreenShot](https://raw.github.com/paragbaxi/qualysguard_vm_scan_trend/master/images/screenshot-static-search-list.png)
+   
 Create a report template (VM > Reports > Templates > New > Scan Template... ) with the following configuration:
 
 1. Scan Results Section > Run Time: Select individual scan results at run time (Manual)
-2. Filter > Selective Vulnerability Reporting > Custom > Add Lists > 
-
+   
+   ![ScreenShot](https://raw.github.com/paragbaxi/qualysguard_vm_scan_trend/master/images/screenshot-report-template-run-time.png)
+   
+2. Filter > Selective Vulnerability Reporting > Custom > Add Lists > Add search list
+   
+   ![ScreenShot](https://raw.github.com/paragbaxi/qualysguard_vm_scan_trend/master/images/screenshot-report-template-filter-custom.png)
+   
+3. Filter > Vulnerability Filters
+   
+   ![ScreenShot](https://raw.github.com/paragbaxi/qualysguard_vm_scan_trend/master/images/screenshot-report-template-filter-IG.png)
+   
 This report_template ID should be inputted in the "--report_template" parameter. You can find the report template ID by editing the report template and clicking the Test button. A new window will pop up with a url like the following:
 https://qualysguard.qualys.com/fo/report/new_report.php?run_temp=REPORT_TEMPLATE_ID&temp=1
 
