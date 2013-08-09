@@ -30,8 +30,10 @@ Create a report template (VM > Reports > Templates > New > Scan Template... ) wi
    
    ![ScreenShot](https://raw.github.com/paragbaxi/qualysguard_vm_scan_trend/master/images/screenshot-report-template-filter-IG.png)
    
-This report_template ID should be inputted in the "--report_template" parameter. You can find the report template ID by editing the report template and clicking the Test button. A new window will pop up with a url like the following:
-https://qualysguard.qualys.com/fo/report/new_report.php?run_temp=REPORT_TEMPLATE_ID&temp=1
+This report_template ID should be inputted in the "--report_template" parameter. You can find the report template ID by viewing the report template info:
+VM > Reports > Templates > Dropdown next to report template > Info > General Information
+
+![ScreenShot]()
 
 The report template ID is the value associated with the run_temp parameter. This setting will enable the script to generate reports against manual scans instead of downloading complete scan data (which can be hundreds of megabytes on large scans).
 
