@@ -52,13 +52,13 @@ def load_scan(scan_ref, report_template=None):
             print 'Downloading scan report %s ...' % (scan_ref),
             request_parameters = {'ref': scan_ref}
             logger.debug(request_parameters)
-            report_xml = qgc.request(1, 'scan_report.php', request_parameters).encode('utf-8')
+            report_xml = qgc.request('scan_report.php', request_parameters)
         else:
             # Generate report.
             print 'Generating report against %s ...' % (scan_ref),
             request_parameters = {'action': 'launch', 'template_id': str(report_template), 'report_type': 'Scan', 'output_format': 'xml', 'report_refs': scan_ref}
             logger.debug(request_parameters)
-            xml_output = qgc.request(2, 'report', request_parameters).encode('utf-8')
+            xml_output = qgc.request('api/2.0/fo/report', request_parameters)
             report_id = etree.XML(xml_output).find('.//VALUE').text
             logger.debug('report_id: %s' % (report_id))
             # Wait for report to finish spooling.
@@ -72,7 +72,7 @@ def load_scan(scan_ref, report_template=None):
             time.sleep(STARTUP_DELAY)
             for n in range(0, MAX_CHECKS):
                 # Check to see if report is done.
-                xml_output = qgc.request(2, 'report', {'action': 'list', 'id': report_id}).encode('utf-8')
+                xml_output = qgc.request('api/2.0/fo/report', {'action': 'list', 'id': report_id})
                 tag_status = etree.XML(xml_output).findtext(".//STATE")
                 logger.debug('tag_status: %s' % (tag_status))
                 tag_status = etree.XML(xml_output).findtext(".//STATE")
@@ -86,7 +86,7 @@ def load_scan(scan_ref, report_template=None):
                 print 'Report still spooling. Trying again in %s seconds.' % (POLLING_DELAY)
                 time.sleep(POLLING_DELAY)
             # We now have to fetch the report.  Use the report id.
-            report_xml = qgc.request(2, 'report', {'action': 'fetch', 'id': report_id}).encode('utf-8')
+            report_xml = qgc.request('api/2.0/fo/report', {'action': 'fetch', 'id': report_id})
         print 'done.'
         # Store XML.
         with open(scan_filename, 'w') as text_file:
@@ -198,12 +198,12 @@ else:
     # type={On-Demand|Scheduled|API}&
     scan_type = 'Scheduled'
     # Build request.
-    url = 'scan/'
+    url = 'api/2.0/fo/scan/'
     parameters = {'action': 'list', 'state': 'Finished', 'show_ags': '1', 'show_op': '1', 'type': scan_type, 'launched_after_datetime': str(start_date)}
     # Download scan list
     logger.info('Downloading scan list.')
     print 'Downloading scan list ...',
-    xml_output = qgc.request(2, url, parameters).encode('utf-8')
+    xml_output = qgc.request(url, parameters)
     print 'done.'
     # Write scan list XML if debug.
     if c_args.verbose:
