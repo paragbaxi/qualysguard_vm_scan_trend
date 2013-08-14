@@ -263,33 +263,37 @@ for scan_title in scans:
         scan_time = scan_root.xpath('//KEY[@value="DURATION"]/text()')[0]
         logger.debug(scan_time)
         # Parse individual IPs
-        for ip in scan_root.IP:
-            ip_address = str(ip.get("value"))
-            # Store duration, which is part of scan_host_time, QID 45038.
-            try:
-                scan_host_time = ip.INFOS.xpath('CAT[@value="Information gathering"]')[0].xpath('INFO[@number="45038"]')[0].RESULT.text
-                scan_host_time = str(scan_host_time)
-                scan_host_time = scan_host_time[15:scan_host_time.index(' seconds')]
-                scan_host_time = int(scan_host_time)
-            except AttributeError, e:
-                # Host was discovered via DNS table lookup.
-                # IP not actually scanned because it did not respond to discovery.
-                pass
-            # Insert individual IP info.
-            if scan_number == 1:
-                logger.debug('insert %s, %s, %s' % (scan_title, ip_address, scan_host_time))
-                c.execute("INSERT INTO scan_data VALUES (?, ?, ?, null);", (scan_title, ip_address, scan_host_time))
-            else:
-                logger.debug('update %s, %s, %s' % (scan_title, ip_address, scan_host_time))
-                c.execute('''REPLACE INTO scan_data (scan_title, ip, duration_1, duration_2)
-                    VALUES (?,
-                    ?,
-                    (SELECT duration_1 FROM scan_data WHERE (scan_title = ? AND ip = ?)),
-                    ?
-                    );''',(scan_title, ip_address, scan_title, ip_address, scan_host_time))
-                # c.execute("UPDATE scan_data SET duration_2=? WHERE (scan_title = ? AND ip = ?);", (scan_host_time, scan_title, ip_address))
-            conn.commit()
-        # Increment scan number to track duration column.
+        try:
+            for ip in scan_root.IP:
+                ip_address = str(ip.get("value"))
+                # Store duration, which is part of scan_host_time, QID 45038.
+                try:
+                    scan_host_time = ip.INFOS.xpath('CAT[@value="Information gathering"]')[0].xpath('INFO[@number="45038"]')[0].RESULT.text
+                    scan_host_time = str(scan_host_time)
+                    scan_host_time = scan_host_time[15:scan_host_time.index(' seconds')]
+                    scan_host_time = int(scan_host_time)
+                except AttributeError, e:
+                    # Host was discovered via DNS table lookup.
+                    # IP not actually scanned because it did not respond to discovery.
+                    pass
+                # Insert individual IP info.
+                if scan_number == 1:
+                    logger.debug('insert %s, %s, %s' % (scan_title, ip_address, scan_host_time))
+                    c.execute("INSERT INTO scan_data VALUES (?, ?, ?, null);", (scan_title, ip_address, scan_host_time))
+                else:
+                    logger.debug('update %s, %s, %s' % (scan_title, ip_address, scan_host_time))
+                    c.execute('''REPLACE INTO scan_data (scan_title, ip, duration_1, duration_2)
+                        VALUES (?,
+                        ?,
+                        (SELECT duration_1 FROM scan_data WHERE (scan_title = ? AND ip = ?)),
+                        ?
+                        );''',(scan_title, ip_address, scan_title, ip_address, scan_host_time))
+                    # c.execute("UPDATE scan_data SET duration_2=? WHERE (scan_title = ? AND ip = ?);", (scan_host_time, scan_title, ip_address))
+                conn.commit()
+        except AttributeError, e:
+            # No IPs discovered in this scan.
+            pass
+        # Increment scan number to track duration column for DB.
         scan_number += 1
 # Write CSV.
 csv_filename = '%s_scan_trend.csv' % (datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
