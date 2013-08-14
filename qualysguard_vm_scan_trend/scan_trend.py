@@ -292,6 +292,8 @@ for scan_title in scans:
                 conn.commit()
         except AttributeError, e:
             # No IPs discovered in this scan.
+            # Do not increment scan number.
+            scan_number -= 1
             pass
         # Increment scan number to track duration column for DB.
         scan_number += 1
