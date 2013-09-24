@@ -75,17 +75,15 @@ def load_scan(scan_ref, report_template=None):
                 xml_output = qgc.request('api/2.0/fo/report', {'action': 'list', 'id': report_id})
                 tag_status = etree.XML(xml_output).findtext(".//STATE")
                 logger.debug('tag_status: %s' % (tag_status))
-                tag_status = etree.XML(xml_output).findtext(".//STATE")
-                logger.debug('tag_status: %s' % (tag_status))
                 if not type(tag_status) == types.NoneType:
                     # Report is showing up in the Report Center.
-                    if tag_status == 'Finished':
+                    if tag_status.text == 'Finished':
                         # Report creation complete.
                         break
                 # Report not finished, wait.
                 print 'Report still spooling. Trying again in %s seconds.' % (POLLING_DELAY)
                 time.sleep(POLLING_DELAY)
-            # We now have to fetch the report.  Use the report id.
+            # We now have to fetch the report. Use the report id.
             report_xml = qgc.request('api/2.0/fo/report', {'action': 'fetch', 'id': report_id})
         print 'done.'
         # Store XML.
