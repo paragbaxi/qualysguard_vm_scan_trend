@@ -3,7 +3,7 @@ qualysguard_vm_scan_trend
 
 Provide operational context on why vulnerability numbers are fluctuating in QualysGuard. Audits scan trends and accuracy across various scan segments and scan time.
 
-Automatically downloads scheduled scans to show differene in live hosts and host scan times.
+Automatically downloads scheduled scans to show difference in live hosts and host scan times.
 
 Important
 =========
