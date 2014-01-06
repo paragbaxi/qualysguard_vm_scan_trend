@@ -56,7 +56,7 @@ def load_scan(scan_ref, report_template=None):
         else:
             # Generate report.
             print 'Generating report against %s ...' % (scan_ref),
-            request_parameters = {'action': 'launch', 'template_id': str(report_template), 'report_type': 'Scan', 'output_format': 'xml', 'report_refs': scan_ref}
+            request_parameters = {'action': 'launch', 'template_id': str(report_template), 'report_type': 'Scan', 'output_format': 'xml', 'report_refs': scan_ref, 'title', c_args.title}
             logger.debug(request_parameters)
             xml_output = qgc.request('api/2.0/fo/report', request_parameters)
             report_id = etree.XML(xml_output).find('.//VALUE').text
@@ -77,7 +77,7 @@ def load_scan(scan_ref, report_template=None):
                 logger.debug('tag_status: %s' % (tag_status))
                 if not type(tag_status) == types.NoneType:
                     # Report is showing up in the Report Center.
-                    if tag_status.text == 'Finished':
+                    if tag_status == 'Finished':
                         # Report creation complete.
                         break
                 # Report not finished, wait.
@@ -118,8 +118,10 @@ parser = argparse.ArgumentParser(description = 'Trend IG information from scans.
 #     help = 'FUTURE: Asset group to filter against.')
 parser.add_argument('-d', '--days', default='10',
     help = 'Number of days to process. Default: 10.')
-parser.add_argument('-f', '--force_download_scans', action = 'store_true',
+parser.add_argument('-F', '--force_download_scans', action = 'store_true',
                     help = 'Delete existing scan XML and download scan XML.')
+parser.add_argument('-f', '--filter_scan_title',
+                    help = 'Scan title to filter.')
 # parser.add_argument('-m', '--include_manual_scans', action = 'store_true',
 #     help = 'FUTURE: Process adhoc scans. By default, I only process scheduled scans.')
 parser.add_argument('-r', '--report_template',
@@ -127,8 +129,8 @@ parser.add_argument('-r', '--report_template',
             \nThis report template should only include QID 45038, Host Scan Time.''')
 parser.add_argument('--scan_files',
                     help = 'Two scan XML files to be compared, separated by a comma (,).')
-parser.add_argument('-t', '--scan_title',
-                    help = 'Scan title to filter.')
+parser.add_argument('-t', '--title_of_report', default='vm_scan_trend',
+                    help = 'Title to set for manual reports. Default = vm_scan_trend')
 parser.add_argument('-v', '--verbose', action = 'store_true',
                     help = 'Outputs additional information to log.')
 # Parse arguments.
@@ -215,8 +217,8 @@ else:
         # Stringify scan title.
         this_scan_title = scan.TITLE.text
         # Scope to title if parameter enabled.
-        if c_args.scan_title:
-            if this_scan_title != c_args.scan_title:
+        if c_args.filter_scan_title:
+            if this_scan_title != c_args.filter_scan_title:
                 continue
         this_scan_date = scan.LAUNCH_DATETIME.text
         this_scan_date_time = datetime.datetime.strptime( this_scan_date[:-1], "%Y-%m-%dT%H:%M:%S" )
