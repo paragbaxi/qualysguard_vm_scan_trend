@@ -56,7 +56,7 @@ def load_scan(scan_ref, report_template=None):
         else:
             # Generate report.
             print 'Generating report against %s ...' % (scan_ref),
-            request_parameters = {'action': 'launch', 'template_id': str(report_template), 'report_type': 'Scan', 'output_format': 'xml', 'report_refs': scan_ref, 'title': c_args.title_of_report}
+            request_parameters = {'action': 'launch', 'template_id': str(report_template), 'report_type': 'Scan', 'output_format': 'xml', 'report_refs': scan_ref, 'report_title': c_args.title_of_report}
             logger.debug(request_parameters)
             xml_output = qgc.request('api/2.0/fo/report', request_parameters)
             report_id = etree.XML(xml_output).find('.//VALUE').text
