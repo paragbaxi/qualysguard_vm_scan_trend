@@ -142,7 +142,10 @@ if not os.path.exists(PATH_LOG):
 LOG_FILENAME = '%s/%s.log' % (PATH_LOG, datetime.datetime.now().strftime('%Y-%m-%d.%H-%M-%S'))
 # My logging.
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+if c_args.verbose:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.ERROR)
 # logger.propagate = False
 # Set log options.
 logging_level = logging.INFO
