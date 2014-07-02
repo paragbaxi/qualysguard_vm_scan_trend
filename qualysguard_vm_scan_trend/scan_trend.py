@@ -128,7 +128,8 @@ parser.add_argument('-r', '--report_template',
     help = '''Generate reports against REPORT_TEMPLATE's ID to parse data to save time and space.
             \nThis report template should only include QID 45038, Host Scan Time.''')
 parser.add_argument('--scan_files',
-                    help = 'Two scan XML files to be compared, separated by a comma (,).')
+                    help = 'Two scan XML files to be compared, separated by a comma (,).
+                    \nExample: scan1.xml,scan2.xml')
 parser.add_argument('-t', '--title_of_report', default='vm_scan_trend',
                     help = 'Title to set for manual reports. Default = vm_scan_trend')
 parser.add_argument('-v', '--verbose', action = 'store_true',
