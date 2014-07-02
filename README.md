@@ -29,6 +29,7 @@ optional arguments:
   --scan_files SCAN_FILES
                         Two scan XML files to be compared, separated by a
                         comma (,).
+                        Example: scan1.xml,scan2.xml
   -t TITLE_OF_REPORT, --title_of_report TITLE_OF_REPORT
                         Title to set for manual reports. Default =
                         vm_scan_trend
